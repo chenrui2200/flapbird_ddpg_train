@@ -1,8 +1,15 @@
+import asyncio
+import os
+
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
 import gym
+from gym import spaces
+
+from flap_bird_env import FlappyEnv
+from src.flappy import Flappy
 
 
 # 定義 Actor 網絡
@@ -100,43 +107,38 @@ class DDPG:
             self.replay_buffer.pop(0)
         self.replay_buffer.append(experience)
 
-class FlapBirdEnv(gym.Env):
-    def __init__(self):
-        super(FlapBirdEnv, self).__init__()
-        # 定义动作空间和状态空间
-        self.action_space = spaces.Box(low=-1, high=1, shape=(1,), dtype=np.float32)
-        self.observation_space = spaces.Box(low=-10, high=10, shape=(1,), dtype=np.float32)
+    def save(self, filename):
+        torch.save({
+            'actor_state_dict': self.actor.state_dict(),
+            'critic_state_dict': self.critic.state_dict(),
+            'actor_target_state_dict': self.actor_target.state_dict(),
+            'critic_target_state_dict': self.critic_target.state_dict(),
+            'actor_optimizer_state_dict': self.actor_optimizer.state_dict(),
+            'critic_optimizer_state_dict': self.critic_optimizer.state_dict(),
+        }, filename)
 
-        # 初始化状态
-        self.state = np.random.uniform(-10, 10, size=(1,))
-        self.steps_beyond_done = None
-
-    def reset(self):
-        # 重置状态
-        self.state = np.random.uniform(-10, 10, size=(1,))
-        self.steps_beyond_done = 0
-        return self.state
-
-    def step(self, action):
-        # 应用动作并更新状态
-        self.state = np.clip(self.state + action, -10, 10)
-        reward = -abs(self.state[0])  # 奖励为状态的负值（越接近0越好）
-        done = bool(self.steps_beyond_done > 10)
-        self.steps_beyond_done += 1
-        return self.state, reward, done, {}
-
-    def get_state(self):
-        # 渲染环境（可选）
-        print(f"State: {self.state[0]}")
+    def load(self, filename):
+        checkpoint = torch.load(filename)
+        self.actor.load_state_dict(checkpoint['actor_state_dict'])
+        self.critic.load_state_dict(checkpoint['critic_state_dict'])
+        self.actor_target.load_state_dict(checkpoint['actor_target_state_dict'])
+        self.critic_target.load_state_dict(checkpoint['critic_target_state_dict'])
+        self.actor_optimizer.load_state_dict(checkpoint['actor_optimizer_state_dict'])
+        self.critic_optimizer.load_state_dict(checkpoint['critic_optimizer_state_dict'])
 
 
 # 訓練循環
-def train(env_name):
-    env = gym.make(env_name)
+def train(load_model=False, save_model_path='ddpg_model.pth'):
+    env = FlappyEnv(flappy_game=Flappy())
     state_dim = env.observation_space.shape[0]
     action_dim = env.action_space.shape[0]
 
     ddpg = DDPG(state_dim, action_dim)
+
+    # 加载模型
+    if load_model and os.path.exists(save_model_path):
+        ddpg.load(save_model_path)
+        print("Loaded model from", save_model_path)
 
     num_episodes = 1000
     for episode in range(num_episodes):
@@ -156,6 +158,13 @@ def train(env_name):
 
         print(f'Episode {episode}, Total Reward: {total_reward}')
 
+        # 每隔一定回合保存一次模型
+        if episode % 100 == 0:
+            ddpg.save(save_model_path)
+            print("Saved model to", save_model_path)
 
+if __name__=='main':
+    # 启动 asyncio 事件循环
+    asyncio.run(train(load_model=True))
 
 

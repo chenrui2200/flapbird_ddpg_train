@@ -1,5 +1,5 @@
-from ..utils import GameConfig
 from .entity import Entity
+from ..utils import GameConfig
 
 
 class Background(Entity):
