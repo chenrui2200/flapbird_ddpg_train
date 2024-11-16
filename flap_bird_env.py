@@ -1,9 +1,9 @@
 import asyncio
+import time
 
 import gym
 import numpy as np
 from gym import spaces
-
 
 class FlappyEnv(gym.Env):
     def __init__(self, flappy_game):
@@ -13,7 +13,7 @@ class FlappyEnv(gym.Env):
         self.flappy_game = flappy_game
 
         # 定义动作空间（0: 不跳，1: 跳）
-        self.action_space = spaces.Discrete(1)
+        self.action_space = spaces.Discrete(2)
 
         # 定义状态空间，可以根据你的游戏状态定义
         self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(self.state_dim,), dtype=np.float32)
@@ -21,18 +21,23 @@ class FlappyEnv(gym.Env):
 
     def reset(self):
         # 重置游戏状态
-        asyncio.run(self.flappy_game.start())
+        import threading
+        thread = threading.Thread(target=self.start_flappy_game)
+        thread.start()
         return self.get_state()
+
+    def start_flappy_game(self):
+        asyncio.run(self.flappy_game.start())
 
     def step(self, action):
         # 执行动作
-        threshold = 0.5
+        threshold = 0.3
         if action[0] > threshold and hasattr(self.flappy_game, 'player'):  # 跳
             self.flappy_game.player.flap()
 
         # 更新游戏状态
         self.flappy_game.play()
-
+        time.sleep(0.3)
         # 获取新的状态、奖励和是否结束
         state = self.get_state()
         reward = self.get_reward()
@@ -68,7 +73,12 @@ class FlappyEnv(gym.Env):
 
         # 遍历上下管道
         if hasattr(self.flappy_game, 'pipes'):
-            for up_pipe, low_pipe in zip(self.flappy_game.pipes.upper, self.flappy_game.pipes.upper.lower):
+            upper_pipes = self.flappy_game.pipes.upper
+            lower_pipes = self.flappy_game.pipes.lower
+
+            for i in range(len(upper_pipes)):
+                up_pipe = upper_pipes[i]
+                low_pipe = lower_pipes[i]
                 if up_pipe.x > self.flappy_game.player.x and low_pipe.x > self.flappy_game.player.x:
                     # 计算上管道和下管道的 x 坐标差值
                     diff = abs(up_pipe.x - low_pipe.x)
@@ -82,10 +92,11 @@ class FlappyEnv(gym.Env):
 
     def get_reward(self):
         # 定义奖励机制
-        if hasattr(self.flappy_game, 'player') and hasattr(self.flappy_game, 'pipes'):
+        if hasattr(self.flappy_game, 'player') and hasattr(self.flappy_game, 'pipes') \
+                and hasattr(self.flappy_game, 'floor'):
             if self.flappy_game.player.collided(self.flappy_game.pipes, self.flappy_game.floor):
                 return -1  # 碰撞时惩罚
-            return 1  # 成功穿过管道时奖励
+            return 2
         else:
             return 0
 

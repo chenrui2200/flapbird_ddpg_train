@@ -10,7 +10,7 @@ from src.flappy import Flappy
 # 定義 Actor 網絡
 
 # 訓練循環
-def train(load_model=False, save_model_path='ddpg_model.pth'):
+def train(load_model=False):
     env = FlappyEnv(flappy_game=Flappy())
     state_dim = env.observation_space.shape[0]
     action_dim = env.action_space.n
@@ -18,6 +18,7 @@ def train(load_model=False, save_model_path='ddpg_model.pth'):
     ddpg = DDPG(state_dim, action_dim)
 
     # 加载模型
+    save_model_path = 'ddpg_model.pth'
     if load_model and os.path.exists(save_model_path):
         ddpg.load(save_model_path)
         print("Loaded model from", save_model_path)
@@ -35,11 +36,9 @@ def train(load_model=False, save_model_path='ddpg_model.pth'):
             ddpg.update()
             state = next_state
             total_reward += reward
-            time.sleep(0.1)
-            # if done:
-            #     # 开始新的博弈
-            #     env.flappy_game.play()
-            print(f'Episode {episode}, num_step {num_step} ,Total Reward: {total_reward}')
+
+            print(f'Episode {episode}, num_step {num_step} , action: {action}, state: {next_state}'
+                  f', current Reward: {reward}')
 
         # 每隔一定回合保存一次模型
         if episode % 100 == 0:
