@@ -19,12 +19,13 @@ class FlappyEnv(gym.Env):
     def reset(self):
         # 重置游戏状态
         self.flappy_game.start()
+
         return self.get_state()
 
     def step(self, action):
         # 执行动作
         threshold = 0.5
-        if action[0] > threshold:  # 跳
+        if action[0] > threshold and hasattr(self.flappy_game, 'player'):  # 跳
             self.flappy_game.player.flap()
 
         # 更新游戏状态
@@ -34,6 +35,9 @@ class FlappyEnv(gym.Env):
         state = self.get_state()
         reward = self.get_reward()
         done = self.is_game_over()
+
+        if done:
+            reward -= 10
 
         return state, reward, done, {}
 

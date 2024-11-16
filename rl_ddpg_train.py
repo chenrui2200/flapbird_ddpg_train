@@ -1,5 +1,6 @@
 import asyncio
 import os
+import time
 
 from flap_bird_env import FlappyEnv
 from model import DDPG
@@ -22,24 +23,23 @@ def train(load_model=False, save_model_path='ddpg_model.pth'):
         print("Loaded model from", save_model_path)
 
     num_episodes = 1000
+    num_steps = 3000
     for episode in range(num_episodes):
         state = env.reset()
         total_reward = 0
 
-        while True:
+        for num_step in range(num_steps):
             action = ddpg.select_action(state)
             next_state, reward, done, _ = env.step(action)
             ddpg.add_experience((state, action, reward, next_state, float(done)))
             ddpg.update()
             state = next_state
             total_reward += reward
-
-            if done:
-                # 开始新的博弈
-                env.flappy_game.play()
-                break
-
-        print(f'Episode {episode}, Total Reward: {total_reward}')
+            time.sleep(0.1)
+            # if done:
+            #     # 开始新的博弈
+            #     env.flappy_game.play()
+            print(f'Episode {episode}, num_step {num_step} ,Total Reward: {total_reward}')
 
         # 每隔一定回合保存一次模型
         if episode % 100 == 0:

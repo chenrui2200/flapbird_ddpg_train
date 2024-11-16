@@ -20,9 +20,9 @@ class Actor(nn.Module):
 class Critic(nn.Module):
     def __init__(self, state_dim, action_dim):
         super(Critic, self).__init__()
-        self.fc1 = nn.Linear(state_dim + action_dim, 256)
-        self.fc2 = nn.Linear(256, 256)
-        self.fc3 = nn.Linear(256, 1)
+        self.fc1 = nn.Linear(state_dim + action_dim, 128)
+        self.fc2 = nn.Linear(128, 64)
+        self.fc3 = nn.Linear(64, 1)
 
     def forward(self, state, action):
         x = torch.relu(self.fc1(torch.cat([state, action], 1)))
@@ -31,9 +31,9 @@ class Critic(nn.Module):
 
 
 class DDPG:
-    def __init__(self, state_dim, action_dim, use_cuda=False):
+    def __init__(self, state_dim, action_dim):
         # 检查是否有可用的 GPU
-        self.device = torch.device("cuda" if use_cuda and torch.cuda.is_available() else "cpu")
+        self.device = "cuda" if torch.cuda.is_available() else "cpu"
         print('device', self.device)
 
         self.actor = Actor(state_dim, action_dim).to(self.device)
