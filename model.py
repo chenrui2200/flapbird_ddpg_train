@@ -1,18 +1,9 @@
-import asyncio
-import os
-
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
-import gym
-from gym import spaces
-
-from flap_bird_env import FlappyEnv
-from src.flappy import Flappy
 
 
-# 定義 Actor 網絡
 class Actor(nn.Module):
     def __init__(self, state_dim, action_dim):
         super(Actor, self).__init__()
@@ -26,7 +17,6 @@ class Actor(nn.Module):
         return torch.tanh(self.fc3(x))
 
 
-# 定義 Critic 網絡
 class Critic(nn.Module):
     def __init__(self, state_dim, action_dim):
         super(Critic, self).__init__()
@@ -40,18 +30,21 @@ class Critic(nn.Module):
         return self.fc3(x)
 
 
-# DDPG 演算法
 class DDPG:
-    def __init__(self, state_dim, action_dim):
-        self.actor = Actor(state_dim, action_dim)
-        self.critic = Critic(state_dim, action_dim)
-        self.actor_target = Actor(state_dim, action_dim)
-        self.critic_target = Critic(state_dim, action_dim)
+    def __init__(self, state_dim, action_dim, use_cuda=False):
+        # 检查是否有可用的 GPU
+        self.device = torch.device("cuda" if use_cuda and torch.cuda.is_available() else "cpu")
+        print('device', self.device)
+
+        self.actor = Actor(state_dim, action_dim).to(self.device)
+        self.critic = Critic(state_dim, action_dim).to(self.device)
+        self.actor_target = Actor(state_dim, action_dim).to(self.device)
+        self.critic_target = Critic(state_dim, action_dim).to(self.device)
 
         self.actor_optimizer = optim.Adam(self.actor.parameters(), lr=1e-4)
         self.critic_optimizer = optim.Adam(self.critic.parameters(), lr=1e-3)
 
-        # 複製權重
+        # 复制权重
         self.actor_target.load_state_dict(self.actor.state_dict())
         self.critic_target.load_state_dict(self.critic.state_dict())
 
@@ -62,22 +55,22 @@ class DDPG:
         self.tau = 0.005
 
     def select_action(self, state):
-        state = torch.FloatTensor(state).unsqueeze(0)
-        return self.actor(state).detach().numpy()[0]
+        state = torch.FloatTensor(state).to(self.device).unsqueeze(0)
+        return self.actor(state).detach().cpu().numpy()[0]
 
     def update(self):
         if len(self.replay_buffer) < self.batch_size:
             return
 
-        # 隨機選擇一批樣本
+        # 随机选择一批样本
         batch = np.random.choice(len(self.replay_buffer), self.batch_size, replace=False)
         state, action, reward, next_state, done = zip(*[self.replay_buffer[i] for i in batch])
 
-        state = torch.FloatTensor(state)
-        action = torch.FloatTensor(action)
-        reward = torch.FloatTensor(reward).unsqueeze(1)
-        next_state = torch.FloatTensor(next_state)
-        done = torch.FloatTensor(done).unsqueeze(1)
+        state = torch.FloatTensor(state).to(self.device)
+        action = torch.FloatTensor(action).to(self.device)
+        reward = torch.FloatTensor(reward).unsqueeze(1).to(self.device)
+        next_state = torch.FloatTensor(next_state).to(self.device)
+        done = torch.FloatTensor(done).unsqueeze(1).to(self.device)
 
         # 更新 Critic
         target_action = self.actor_target(next_state)
@@ -95,7 +88,7 @@ class DDPG:
         actor_loss.backward()
         self.actor_optimizer.step()
 
-        # 更新 Target 網絡
+        # 更新 Target 网络
         for target_param, param in zip(self.actor_target.parameters(), self.actor.parameters()):
             target_param.data.copy_(self.tau * param.data + (1 - self.tau) * target_param.data)
 
@@ -125,46 +118,3 @@ class DDPG:
         self.critic_target.load_state_dict(checkpoint['critic_target_state_dict'])
         self.actor_optimizer.load_state_dict(checkpoint['actor_optimizer_state_dict'])
         self.critic_optimizer.load_state_dict(checkpoint['critic_optimizer_state_dict'])
-
-
-# 訓練循環
-def train(load_model=False, save_model_path='ddpg_model.pth'):
-    env = FlappyEnv(flappy_game=Flappy())
-    state_dim = env.observation_space.shape[0]
-    action_dim = env.action_space.n
-
-    ddpg = DDPG(state_dim, action_dim)
-
-    # 加载模型
-    if load_model and os.path.exists(save_model_path):
-        ddpg.load(save_model_path)
-        print("Loaded model from", save_model_path)
-
-    num_episodes = 1000
-    for episode in range(num_episodes):
-        state = env.reset()
-        total_reward = 0
-
-        while True:
-            action = ddpg.select_action(state)
-            next_state, reward, done, _ = env.step(action)
-            ddpg.add_experience((state, action, reward, next_state, float(done)))
-            ddpg.update()
-            state = next_state
-            total_reward += reward
-
-            if done:
-                break
-
-        print(f'Episode {episode}, Total Reward: {total_reward}')
-
-        # 每隔一定回合保存一次模型
-        if episode % 100 == 0:
-            ddpg.save(save_model_path)
-            print("Saved model to", save_model_path)
-
-if __name__ == '__main__':
-    # 启动 asyncio 事件循环
-    asyncio.run(train(load_model=True))
-
-
