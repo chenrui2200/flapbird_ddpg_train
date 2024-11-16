@@ -18,10 +18,10 @@ class FlappyEnv(gym.Env):
         # 定义状态空间，可以根据你的游戏状态定义
         self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(self.state_dim,), dtype=np.float32)
 
+
     def reset(self):
         # 重置游戏状态
         asyncio.run(self.flappy_game.start())
-
         return self.get_state()
 
     def step(self, action):
