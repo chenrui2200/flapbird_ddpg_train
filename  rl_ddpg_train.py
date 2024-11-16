@@ -131,7 +131,7 @@ class DDPG:
 def train(load_model=False, save_model_path='ddpg_model.pth'):
     env = FlappyEnv(flappy_game=Flappy())
     state_dim = env.observation_space.shape[0]
-    action_dim = env.action_space.shape[0]
+    action_dim = env.action_space.n
 
     ddpg = DDPG(state_dim, action_dim)
 
@@ -163,7 +163,7 @@ def train(load_model=False, save_model_path='ddpg_model.pth'):
             ddpg.save(save_model_path)
             print("Saved model to", save_model_path)
 
-if __name__=='main':
+if __name__ == '__main__':
     # 启动 asyncio 事件循环
     asyncio.run(train(load_model=True))
 

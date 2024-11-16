@@ -23,7 +23,7 @@ class GameConfig:
         self.window = window
         self.images = images
         self.sounds = sounds
-        self.debug = os.environ.get("DEBUG", False)
+        self.debug = os.environ.get("DEBUG", True)
 
     def tick(self) -> None:
         self.clock.tick(self.fps)

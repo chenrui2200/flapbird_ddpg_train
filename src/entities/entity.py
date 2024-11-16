@@ -7,14 +7,14 @@ from ..utils import GameConfig, get_hit_mask, pixel_collision
 
 class Entity:
     def __init__(
-        self,
-        config: GameConfig,
-        image: Optional[pygame.Surface] = None,
-        x=0,
-        y=0,
-        w: int = None,
-        h: int = None,
-        **kwargs,
+            self,
+            config: GameConfig,
+            image: Optional[pygame.Surface] = None,
+            x=0,
+            y=0,
+            w: int = None,
+            h: int = None,
+            **kwargs,
     ) -> None:
         self.config = config
         self.x = x
@@ -32,7 +32,7 @@ class Entity:
         self.__dict__.update(kwargs)
 
     def update_image(
-        self, image: pygame.Surface, w: int = None, h: int = None
+            self, image: pygame.Surface, w: int = None, h: int = None
     ) -> None:
         self.image = image
         self.hit_mask = get_hit_mask(image)
@@ -65,11 +65,23 @@ class Entity:
             pygame.draw.rect(self.config.screen, (255, 0, 0), rect, 1)
             # write x and y at top of rect
             font = pygame.font.SysFont("Arial", 13, True)
+            entity_position_info = {
+                'x': f'{self.x:.1f}',
+                'y': f'{self.y:.1f}',
+                'w': f'{self.w:.1f}',
+                'h': f'{self.h:.1f}'
+            }
             text = font.render(
                 f"{self.x:.1f}, {self.y:.1f}, {self.w:.1f}, {self.h:.1f}",
                 True,
                 (255, 255, 255),
             )
+            if self.get_type() == 'Pipe':
+                print('Pipe', entity_position_info)
+
+            if self.get_type() == 'Player':
+                print('Player', entity_position_info)
+
             self.config.screen.blit(
                 text,
                 (
@@ -81,3 +93,6 @@ class Entity:
     def draw(self) -> None:
         if self.image:
             self.config.screen.blit(self.image, self.rect)
+
+    def get_type(self):
+        return self.__class__.__name__  # 获取子类的类名
