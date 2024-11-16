@@ -42,8 +42,8 @@ class Flappy:
             self.game_over_message = GameOver(self.config)
             self.pipes = Pipes(self.config)
             self.score = Score(self.config)
-            # await self.splash()
             await self.play()
+            # await self.splash()
             #await self.game_over()
 
     async def splash(self):

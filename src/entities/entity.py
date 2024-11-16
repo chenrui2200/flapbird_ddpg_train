@@ -65,22 +65,23 @@ class Entity:
             pygame.draw.rect(self.config.screen, (255, 0, 0), rect, 1)
             # write x and y at top of rect
             font = pygame.font.SysFont("Arial", 13, True)
-            entity_position_info = {
-                'x': f'{self.x:.1f}',
-                'y': f'{self.y:.1f}',
-                'w': f'{self.w:.1f}',
-                'h': f'{self.h:.1f}'
-            }
+
             text = font.render(
                 f"{self.x:.1f}, {self.y:.1f}, {self.w:.1f}, {self.h:.1f}",
                 True,
                 (255, 255, 255),
             )
-            if self.get_type() == 'Pipe':
-                print('Pipe', entity_position_info)
-
-            if self.get_type() == 'Player':
-                print('Player', entity_position_info)
+            # entity_position_info = {
+            #     'x': f'{self.x:.1f}',
+            #     'y': f'{self.y:.1f}',
+            #     'w': f'{self.w:.1f}',
+            #     'h': f'{self.h:.1f}'
+            # }
+            # if self.get_type() == 'Pipe':
+            #     print('Pipe', entity_position_info)
+            #
+            # if self.get_type() == 'Player':
+            #     print('Player', entity_position_info)
 
             self.config.screen.blit(
                 text,

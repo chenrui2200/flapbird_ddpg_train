@@ -33,12 +33,12 @@ class Pipes(Entity):
             self.spawn_new_pipes()
         self.remove_old_pipes()
 
-        print('up.size', len(self.upper))
-        print('lower.size', len(self.lower))
+        #print('up.size', len(self.upper))
+        #print('lower.size', len(self.lower))
         for up_pipe, low_pipe in zip(self.upper, self.lower):
-            print('-------up pipe-------')
+            #print('-------up pipe-------')
             up_pipe.tick()
-            print('-------low pipe-------')
+            #print('-------low pipe-------')
             low_pipe.tick()
 
     def stop(self) -> None:

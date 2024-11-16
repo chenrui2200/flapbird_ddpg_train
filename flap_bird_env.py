@@ -1,3 +1,5 @@
+import asyncio
+
 import gym
 import numpy as np
 from gym import spaces
@@ -18,7 +20,7 @@ class FlappyEnv(gym.Env):
 
     def reset(self):
         # 重置游戏状态
-        self.flappy_game.start()
+        asyncio.run(self.flappy_game.start())
 
         return self.get_state()
 
