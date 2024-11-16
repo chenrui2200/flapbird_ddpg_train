@@ -14,7 +14,7 @@ from .entities import (
     Score,
     WelcomeMessage,
 )
-from .utils import GameConfig, Images, Sounds, Window
+from .utils import GameConfig, Images, Window
 
 
 class Flappy:
@@ -31,7 +31,6 @@ class Flappy:
             fps=30,
             window=window,
             images=images,
-            sounds=Sounds(),
         )
 
     async def start(self):
