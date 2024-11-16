@@ -24,6 +24,7 @@ class Flappy:
         window = Window(288, 512)
         screen = pygame.display.set_mode((window.width, window.height))
         images = Images()
+        self.game_num = 0
 
         self.config = GameConfig(
             screen=screen,
@@ -83,6 +84,8 @@ class Flappy:
 
     async def play(self):
         self.score.reset()
+        self.game_num += 1
+        print(f'new game begin, game_num: {self.game_num}')
         self.player.set_mode(PlayerMode.NORMAL)
 
         while True:

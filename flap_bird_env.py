@@ -18,30 +18,38 @@ class FlappyEnv(gym.Env):
         # 定义状态空间，可以根据你的游戏状态定义
         self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(self.state_dim,), dtype=np.float32)
 
+        # 定义局编号
+        self.current_game_num = 0
 
     def reset(self):
         # 重置游戏状态
         import threading
         thread = threading.Thread(target=self.start_flappy_game)
         thread.start()
+        self.current_game_num == self.flappy_game.game_num
         return self.get_state()
 
     def start_flappy_game(self):
         asyncio.run(self.flappy_game.start())
 
-    def step(self, action):
+    def step(self, action, num_step):
         # 执行动作
-        threshold = 0.3
-        if action[0] > threshold and hasattr(self.flappy_game, 'player'):  # 跳
+        threshold = 0.5
+
+        if action > threshold and hasattr(self.flappy_game, 'player'):  # 跳
             self.flappy_game.player.flap()
 
-        # 更新游戏状态
-        self.flappy_game.play()
-        time.sleep(0.3)
+        time.sleep(1)
         # 获取新的状态、奖励和是否结束
         state = self.get_state()
         reward = self.get_reward()
         done = self.is_game_over()
+
+        if self.current_game_num < self.flappy_game.game_num:
+            self.current_game_num = self.flappy_game.game_num
+            done = True
+        else:
+            reward += self.flappy_game.score.score * 10 + num_step * 3
 
         if done:
             reward -= 10
