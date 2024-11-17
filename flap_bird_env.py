@@ -34,7 +34,7 @@ class FlappyEnv(gym.Env):
     def start_flappy_game(self):
         asyncio.run(self.flappy_game.start())
 
-    def step(self, action):
+    def step(self, action, num_step):
         # 执行动作
         threshold = 0.7
         if action > threshold and hasattr(self.flappy_game, 'player'):  # 跳
@@ -73,7 +73,7 @@ class FlappyEnv(gym.Env):
         #         self.up_pipe, self.low_pipe = up_pipe, low_pipe
         # else:
         #     self.up_pipe, self.low_pipe = up_pipe, low_pipe
-        reward += 0.1 * (self.flappy_game.score.score - 1)
+        reward += 0.1 * (self.flappy_game.score.score - 1) + 0.1 * num_step
 
         return state, reward, done, {}
 

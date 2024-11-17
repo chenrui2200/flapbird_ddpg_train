@@ -31,7 +31,7 @@ def train(load_model=False):
 
         for num_step in range(1000):
             action_values = ddpg.select_action(state)
-            next_state, reward, done, _ = env.step(action_values[0])
+            next_state, reward, done, _ = env.step(action_values[0], num_step)
             # 增加到经验区
             ddpg.add_experience((state, action_values, reward, next_state, float(done)))
             ddpg.update()
