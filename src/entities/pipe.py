@@ -10,7 +10,7 @@ class Pipe(Entity):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.vel_x = -5
-        self.number = str(uuid.uuid4())
+        self.number = str(args[0].game_num) + '_'+ str(uuid.uuid4())
 
     def draw(self) -> None:
         self.x += self.vel_x

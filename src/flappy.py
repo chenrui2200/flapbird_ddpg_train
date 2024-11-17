@@ -36,6 +36,7 @@ class Flappy:
 
     async def start(self):
         while True:
+            self.config.set_game_num(self.game_num)
             self.background = Background(self.config)
             self.floor = Floor(self.config)
             self.player = Player(self.config)
@@ -85,7 +86,7 @@ class Flappy:
     async def play(self):
         self.score.reset()
         self.game_num += 1
-        print(f'new game begin, game_num: {self.game_num}')
+        #print(f'new game begin, game_num: {self.game_num}')
         self.player.set_mode(PlayerMode.NORMAL)
 
         while True:

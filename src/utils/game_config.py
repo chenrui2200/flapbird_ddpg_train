@@ -21,6 +21,10 @@ class GameConfig:
         self.window = window
         self.images = images
         self.debug = os.environ.get("DEBUG", True)
+        self.game_num = 0
 
     def tick(self) -> None:
         self.clock.tick(self.fps)
+
+    def set_game_num(self, game_num):
+        self.game_num = game_num
