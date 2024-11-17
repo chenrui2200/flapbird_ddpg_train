@@ -23,7 +23,7 @@ def train(load_model=False):
         print("Loaded model from", save_model_path)
 
     num_episodes = 10000
-    state = env.reset()
+    state, _, _ = env.reset()
 
     for episode in range(num_episodes):
         # 计算总的奖励值
@@ -31,19 +31,15 @@ def train(load_model=False):
 
         for num_step in range(1000):
             action_values = ddpg.select_action(state)
-            probabilities = np.exp(action_values) / np.sum(np.exp(action_values))
-            action = np.random.choice(len(action_values), p=probabilities)
-
-            next_state, reward, done, _ = env.step(action, num_step)
+            next_state, reward, done, _ = env.step(action_values[0])
             # 增加到经验区
             ddpg.add_experience((state, action_values, reward, next_state, float(done)))
             ddpg.update()
             state = next_state
             total_reward += reward
 
-            print(f'Episode {episode}, num_step {num_step} , '
-                  f'action_values: {action_values}, '
-                  f'action: {action}, '
+            print(f'Episode {episode}, num_step {num_step}, '
+                  f'action: {action_values}, '
                   f'state: {next_state}, '
                   f'current Reward: {reward}')
 

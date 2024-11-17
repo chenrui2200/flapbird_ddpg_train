@@ -1,4 +1,5 @@
 import random
+import uuid
 from typing import List
 
 from ..utils import GameConfig
@@ -9,6 +10,7 @@ class Pipe(Entity):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.vel_x = -5
+        self.number = str(uuid.uuid4())
 
     def draw(self) -> None:
         self.x += self.vel_x

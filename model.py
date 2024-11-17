@@ -53,10 +53,36 @@ class DDPG:
         self.batch_size = 64
         self.gamma = 0.99
         self.tau = 0.005
+        self.action_dim = action_dim
+        self.noise = self.ou_noise()
+
+    def ou_noise(self):
+        # 初始化 Ornstein-Uhlenbeck 噪声
+        self.mu = np.zeros(self.action_dim)
+        self.theta = 0.15
+        self.sigma = 0.2
+        self.dt = 1e-2
+        self.x_prev = np.zeros(self.action_dim)
+        return self
+
+    def get_ou_noise(self):
+        # 生成 Ornstein-Uhlenbeck 噪声
+        x = self.x_prev + self.theta * (self.mu - self.x_prev) * self.dt + self.sigma * np.sqrt(
+            self.dt) * np.random.randn(self.action_dim)
+        self.x_prev = x
+        return x
 
     def select_action(self, state):
         state = torch.FloatTensor(state).to(self.device).unsqueeze(0)
-        return self.actor(state).detach().cpu().numpy()[0]
+        action = self.actor(state).detach().cpu().numpy()[0]
+
+        # 添加噪声
+        noise = self.get_ou_noise()
+        action = action + noise
+
+        # 限制动作范围，例如在 [0, 1] 之间
+        action = np.clip(action, 0, 1)
+        return action
 
     def update(self):
         if len(self.replay_buffer) < self.batch_size:

@@ -9,17 +9,19 @@ class FlappyEnv(gym.Env):
     def __init__(self, flappy_game):
         super(FlappyEnv, self).__init__()
         # 我只关注笨鸟和它前面的管道口坐标的位置
-        self.state_dim = 6
+        self.state_dim = 9
         self.flappy_game = flappy_game
 
         # 定义动作空间（0: 不跳，1: 跳）
-        self.action_space = spaces.Discrete(2)
+        self.action_space = spaces.Discrete(1)
 
         # 定义状态空间，可以根据你的游戏状态定义
         self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(self.state_dim,), dtype=np.float32)
 
         # 定义局编号
         self.current_game_num = 0
+        # 定义需要跳过的pip
+        self.up_pipe, self.low_pipe = None, None
 
     def reset(self):
         # 重置游戏状态
@@ -32,27 +34,46 @@ class FlappyEnv(gym.Env):
     def start_flappy_game(self):
         asyncio.run(self.flappy_game.start())
 
-    def step(self, action, num_step):
+    def step(self, action):
         # 执行动作
         threshold = 0.5
-
         if action > threshold and hasattr(self.flappy_game, 'player'):  # 跳
             self.flappy_game.player.flap()
 
-        time.sleep(1)
         # 获取新的状态、奖励和是否结束
-        state = self.get_state()
+        state, up_pipe, low_pipe = self.get_state()
         reward = self.get_reward()
-        done = self.is_game_over()
+        done = False
+        '''
+            0:  (player.x + player.w) if player else 0,
+            1:  player.y if player else 0,
+            2:  (player.y + player.h)if player else 0,
+            3:  up_pipe.x if up_pipe else 0,
+            4:  (up_pipe.x + up_pipe.w) if up_pipe else 0,
+            5:  (up_pipe.y + up_pipe.h) if up_pipe else 0,
+            6:  low_pipe.x if low_pipe else 0,
+            7:  (low_pipe.x + low_pipe.w)if low_pipe else 0,
+            8:  low_pipe.y if low_pipe else 0
+        '''
+        if state[5] < state[1] < state[8]:
+            reward += 0.3
+        else:
+            reward -= 0.5
 
+        if self.up_pipe and self.low_pipe:
+            if self.up_pipe.number != up_pipe.number:
+                if not self.is_game_over():
+                    reward += 10
+                    self.up_pipe, self.low_pipe = up_pipe, low_pipe
+        else:
+            self.up_pipe, self.low_pipe = up_pipe, low_pipe
+
+
+        time.sleep(0.4)
         if self.current_game_num < self.flappy_game.game_num:
             self.current_game_num = self.flappy_game.game_num
-            done = True
-        else:
-            reward += self.flappy_game.score.score * 10 + num_step * 3
-
-        if done:
             reward -= 10
+            done = True
 
         return state, reward, done, {}
 
@@ -60,21 +81,24 @@ class FlappyEnv(gym.Env):
         # 找到笨鸟前面的管道up和low各一个
         up_pipe, low_pipe = self.find_closest_pipes()
         # 返回当前状态的表示
-        play_x, player_y = self.get_play_xy()
+        player = self.get_play()
         return np.array([
-            play_x,
-            player_y,
+            (player.x + player.w) if player else 0,
+            player.y if player else 0,
+            (player.y + player.h)if player else 0,
             up_pipe.x if up_pipe else 0,
-            up_pipe.y if up_pipe else 0,
+            (up_pipe.x + up_pipe.w) if up_pipe else 0,
+            (up_pipe.y + up_pipe.h) if up_pipe else 0,
             low_pipe.x if low_pipe else 0,
+            (low_pipe.x + low_pipe.w)if low_pipe else 0,
             low_pipe.y if low_pipe else 0
-        ])
+        ]), up_pipe, low_pipe
 
-    def get_play_xy(self):
+    def get_play(self):
         if hasattr(self.flappy_game, 'player'):
-            return self.flappy_game.player.x, self.flappy_game.player.y
+            return self.flappy_game.player
         else:
-            return 0, 0
+            return None
     def find_closest_pipes(self):
         closest_pipes = None
         min_diff = float('inf')  # 初始化最低差值为正无穷
@@ -87,7 +111,8 @@ class FlappyEnv(gym.Env):
             for i in range(len(upper_pipes)):
                 up_pipe = upper_pipes[i]
                 low_pipe = lower_pipes[i]
-                if up_pipe.x > self.flappy_game.player.x and low_pipe.x > self.flappy_game.player.x:
+                if (up_pipe.x + up_pipe.w) > self.flappy_game.player.x and \
+                        (low_pipe.x + low_pipe.w) > self.flappy_game.player.x:
                     # 计算上管道和下管道的 x 坐标差值
                     diff = abs(up_pipe.x - low_pipe.x)
                     if diff < min_diff:
@@ -104,7 +129,7 @@ class FlappyEnv(gym.Env):
                 and hasattr(self.flappy_game, 'floor'):
             if self.flappy_game.player.collided(self.flappy_game.pipes, self.flappy_game.floor):
                 return -1  # 碰撞时惩罚
-            return 2
+            return 0.1
         else:
             return 0
 
