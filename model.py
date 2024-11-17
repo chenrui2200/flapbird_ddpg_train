@@ -50,8 +50,8 @@ class DDPG:
 
         self.replay_buffer = []
         self.max_buffer_size = 100000
-        self.batch_size = 64
-        self.gamma = 0.99
+        self.batch_size = 256
+        self.gamma = 0.95
         self.tau = 0.005
         self.action_dim = action_dim
         self.noise = self.ou_noise()
@@ -59,8 +59,8 @@ class DDPG:
     def ou_noise(self):
         # 初始化 Ornstein-Uhlenbeck 噪声
         self.mu = np.zeros(self.action_dim)
-        self.theta = 0.15
-        self.sigma = 0.2
+        self.theta = 0.7
+        self.sigma = 0.5
         self.dt = 1e-2
         self.x_prev = np.zeros(self.action_dim)
         return self

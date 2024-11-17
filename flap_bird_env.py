@@ -36,11 +36,12 @@ class FlappyEnv(gym.Env):
 
     def step(self, action):
         # 执行动作
-        threshold = 0.5
+        threshold = 0.7
         if action > threshold and hasattr(self.flappy_game, 'player'):  # 跳
             self.flappy_game.player.flap()
 
         # 获取新的状态、奖励和是否结束
+        time.sleep(0.1)
         state, up_pipe, low_pipe = self.get_state()
         reward = self.get_reward()
         done = False
@@ -56,25 +57,23 @@ class FlappyEnv(gym.Env):
             8:  low_pipe.y if low_pipe else 0
         '''
         if state[5] < state[1] < state[8]:
-            reward += 0.3
-        else:
-            reward -= 0.5
+            reward += 0.1
 
-        time.sleep(0.4)
         if self.current_game_num < self.flappy_game.game_num:
             self.current_game_num = self.flappy_game.game_num
-            reward -= 10
+            reward -= 1
             done = True
 
-        if self.up_pipe and self.low_pipe:
-            if self.up_pipe.number != up_pipe.number \
-                    and self.up_pipe in self.flappy_game.pipes.upper \
-                    and self.low_pipe in self.flappy_game.pipes.lower:
-                # 此处需要修改bug，重新开始博弈后也会掉进这个逻辑里
-                reward += 10
-                self.up_pipe, self.low_pipe = up_pipe, low_pipe
-        else:
-            self.up_pipe, self.low_pipe = up_pipe, low_pipe
+        # if self.up_pipe and self.low_pipe:
+        #     if self.up_pipe.number != up_pipe.number \
+        #             and self.up_pipe in self.flappy_game.pipes.upper \
+        #             and self.low_pipe in self.flappy_game.pipes.lower:
+        #         # 此处需要修改bug，重新开始博弈后也会掉进这个逻辑里
+        #         reward += 1
+        #         self.up_pipe, self.low_pipe = up_pipe, low_pipe
+        # else:
+        #     self.up_pipe, self.low_pipe = up_pipe, low_pipe
+        reward += 0.1 * (self.flappy_game.score.score - 1)
 
         return state, reward, done, {}
 
@@ -128,8 +127,9 @@ class FlappyEnv(gym.Env):
         # 定义奖励机制
         if hasattr(self.flappy_game, 'player') and hasattr(self.flappy_game, 'pipes') \
                 and hasattr(self.flappy_game, 'floor'):
+            # 碰撞时惩罚
             if self.flappy_game.player.collided(self.flappy_game.pipes, self.flappy_game.floor):
-                return -1  # 碰撞时惩罚
+                return -0.5
             return 0.1
         else:
             return 0
