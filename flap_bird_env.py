@@ -63,6 +63,7 @@ class FlappyEnv(gym.Env):
         if self.up_pipe and self.low_pipe:
             if self.up_pipe.number != up_pipe.number:
                 if not self.is_game_over():
+                    # 此处需要修改bug，重新开始博弈后也会掉进这个逻辑里
                     reward += 10
                     self.up_pipe, self.low_pipe = up_pipe, low_pipe
         else:
