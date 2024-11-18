@@ -1,3 +1,5 @@
+import random
+
 import numpy as np
 import torch
 import torch.nn as nn
@@ -77,11 +79,12 @@ class DDPG:
         action = self.actor(state).detach().cpu().numpy()[0]
 
         # 添加噪声
-        noise = self.get_ou_noise()
-        action = action + noise
+        #noise = self.get_ou_noise()
+        #action = action + noise
 
         # 限制动作范围，例如在 [0, 1] 之间
         action = np.clip(action, 0, 1)
+        #print('action', action)
         return action
 
     def update(self):

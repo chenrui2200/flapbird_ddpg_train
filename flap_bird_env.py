@@ -36,7 +36,7 @@ class FlappyEnv(gym.Env):
 
     def step(self, action, num_step):
         # 执行动作
-        threshold = 0.7
+        threshold = 0.5
         if action > threshold and hasattr(self.flappy_game, 'player'):  # 跳
             self.flappy_game.player.flap()
 

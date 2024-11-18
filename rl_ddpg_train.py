@@ -1,8 +1,6 @@
 import asyncio
 import os
-import time
 
-import numpy as np
 from matplotlib import pyplot as plt
 
 from flap_bird_env import FlappyEnv
@@ -30,19 +28,21 @@ def train(load_model=False):
     for episode in range(num_episodes):
 
         for num_step in range(1000):
+            state, _, _ = env.get_state()
             action_values = ddpg.select_action(state)
             next_state, reward, done, _ = env.step(action_values[0], num_step)
             # 增加到经验区
             ddpg.add_experience((state, action_values, reward, next_state, float(done)))
             ddpg.update()
-            state = next_state
 
             if len(rewards) > 10000:
                 rewards.pop(0)
 
             print(f'Episode {episode}, num_step {num_step}, '
                   f'action: {action_values}, '
-                  f'state: {next_state}, '
+                  f'state: {state}, '
+                  f'next_state: {next_state}, '
+                  f'game_score: {env.flappy_game.score.score}, '
                   f'current Reward: {reward}')
 
             if done:
